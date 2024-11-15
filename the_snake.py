@@ -1,4 +1,4 @@
-from random import randint, choice
+from random import randint
 
 import pygame
 
@@ -15,20 +15,22 @@ LEFT = (-1, 0)
 RIGHT = (1, 0)
 
 # Cловарь TURNS
-# Здесь исправил замечение к коду
 TURNS = {
-    (pygame.K_UP, DOWN): UP,
-    (pygame.K_UP, LEFT): UP,
-    (pygame.K_UP, RIGHT): UP,
-    (pygame.K_DOWN, UP): DOWN,
-    (pygame.K_DOWN, LEFT): DOWN,
-    (pygame.K_DOWN, RIGHT): DOWN,
-    (pygame.K_LEFT, RIGHT): LEFT,
-    (pygame.K_LEFT, UP): LEFT,
-    (pygame.K_LEFT, DOWN): LEFT,
-    (pygame.K_RIGHT, LEFT): RIGHT,
-    (pygame.K_RIGHT, UP): RIGHT,
-    (pygame.K_RIGHT, DOWN): RIGHT,
+    # Текущее направление UP
+    (pygame.K_UP, LEFT): LEFT,      # Поворот влево
+    (pygame.K_UP, RIGHT): RIGHT,    # Поворот вправо
+
+    # Текущее направление DOWN
+    (pygame.K_DOWN, LEFT): LEFT,    # Поворот влево
+    (pygame.K_DOWN, RIGHT): RIGHT,  # Поворот вправо
+
+    # Текущее направление LEFT
+    (pygame.K_LEFT, UP): UP,        # Поворот вверх
+    (pygame.K_LEFT, DOWN): DOWN,    # Поворот вниз
+
+    # Текущее направление RIGHT
+    (pygame.K_RIGHT, UP): UP,       # Поворот вверх
+    (pygame.K_RIGHT, DOWN): DOWN,   # Поворот вниз
 }
 
 
@@ -57,7 +59,6 @@ pygame.display.set_caption('Змейка')
 clock = pygame.time.Clock()
 
 # Начальная позиция игры и змеи
-# Здесь исправил замечение к коду
 POSITION_GAME = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
 POSITION_SNAKE = (GRID_WIDTH // 2, GRID_HEIGHT // 2)
 POSITION_INITIAL = (SCREEN_WIDTH // 2 // GRID_SIZE, SCREEN_HEIGHT
@@ -117,15 +118,12 @@ class Snake(GameObject):
 
     def reset(self):
         """Используется для сброса состояния змейки."""
-        # Здесь частично исправил замечение к коду
-        # Если убрать growing то получаем ошибку pytest
         initial_position = POSITION_INITIAL
         self.position = initial_position
         self.body_color = SNAKE_COLOR
         self.length = 1
         self.positions = [initial_position]
-        self.direction = choice([UP, DOWN, LEFT, RIGHT])
-        self.next_direction = self.direction
+        self.direction = RIGHT
         self.growing = False
         self.last = None
 
@@ -133,9 +131,10 @@ class Snake(GameObject):
         """Предназначена для получения текущей позиции головы змейки."""
         return self.positions[0]
 
+    # По условиям задачи этот метод должен быть опредлен в классе Змея
+    # Иначе код не пройдет pytest (уже писал вам в пачку об этом)
     def update_direction(self, event):
         """Обновляет направление движения змейки на основе нажатой клавиши."""
-        # Здесь исправил замечение к коду
         if (event.key, self.direction) in TURNS:
             self.next_direction = TURNS[(event.key, self.direction)]
 
@@ -148,9 +147,9 @@ class Snake(GameObject):
 
         # управляем длиной змейки
         if self.growing:
-            self.positions.insert(0, new_head)  # Добавляем новый сегмент
-            self.length += 1  # Увеличиваем длину
-            self.growing = False  # Сбрасываем флаг
+            self.positions.insert(0, new_head)
+            self.length += 1
+            self.growing = False
         else:
             if len(self.positions) > self.length:
                 self.last = self.positions.pop()
@@ -158,32 +157,18 @@ class Snake(GameObject):
 
         return new_head
 
-    def grow(self):  # Без этого метода код не работает
+    def grow(self):
         """Позволяет змейке увеличиваться в длину."""
         self.growing = True
 
     def draw(self, screen):
         """Отвечает за визуализацию змейки на экране."""
-        # Отрисовка тела змейки (все сегменты, кроме головы)
-        # Если удалить цикл ниже
-        # То змейка перестанет добовлять к себе новые блоки
-        for position in self.positions[:-1]:
-            rect = pygame.Rect(position[0] * GRID_SIZE, position[1]
-                               * GRID_SIZE, GRID_SIZE, GRID_SIZE)
-            pygame.draw.rect(screen, self.body_color, rect)
-            pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
-
-        # Получаем позицию головы змейки с помощью вспомогательного метода
-        # Здесь исправил замечение к коду
         head_x, head_y = self.get_head_position()
         self.draw_cell(screen, (head_x, head_y), self.body_color)
 
-        # Затирание последнего сегмента
-        # Здесь исправил замечение к коду
         if self.last:
-            last_rect = pygame.Rect(self.last[0] * GRID_SIZE, self.last[1]
-                                    * GRID_SIZE, GRID_SIZE, GRID_SIZE)
-            pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+            # Используем метод draw_cell для отрисовки последней позиции
+            self.draw_cell(screen, self.last, BOARD_BACKGROUND_COLOR)
 
 
 def handle_keys(game_object):
@@ -196,12 +181,8 @@ def handle_keys(game_object):
             pygame.quit()
             raise SystemExit
         elif event.type == pygame.KEYDOWN and event.key in TURN_KEYS:
-            # Получаем новое направление из TURNS
-            new_direction = TURNS.get((event.key, game_object.direction),
-                                      game_object.direction)
-            # Проверяем, чтобы новое направление не совпадало с текущим
-            if new_direction != game_object.direction:
-                game_object.next_direction = new_direction
+            game_object.direction = TURNS.get
+            ((event.key, game_object.direction), game_object.direction)
 
 
 def main():
@@ -217,11 +198,8 @@ def main():
         clock.tick(SPEED)
         screen.fill(BOARD_BACKGROUND_COLOR)
 
-        # Обрабатываем ввод пользователя:
-        handle_keys(snake)  # Передаем объект змейки в функцию
+        handle_keys(snake)
 
-        # Проверка на столкновение с собой в главной функции
-        # Здесь исправил замечение к коду
         if len(snake.positions) != len(set(snake.positions)):
             snake.reset()
 
