@@ -1,7 +1,8 @@
-from random import randint
+from random import randint, choice
 
 import pygame
 
+# Посмотрите пожалуйста сообщения в пачке
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 15
@@ -17,20 +18,20 @@ RIGHT = (1, 0)
 # Cловарь TURNS
 TURNS = {
     # Текущее направление UP
-    (pygame.K_UP, LEFT): LEFT,      # Поворот влево
-    (pygame.K_UP, RIGHT): RIGHT,    # Поворот вправо
+    (pygame.K_UP, LEFT): LEFT,  # Поворот влево
+    (pygame.K_UP, RIGHT): RIGHT,  # Поворот вправо
 
     # Текущее направление DOWN
-    (pygame.K_DOWN, LEFT): LEFT,    # Поворот влево
+    (pygame.K_DOWN, LEFT): LEFT,  # Поворот влево
     (pygame.K_DOWN, RIGHT): RIGHT,  # Поворот вправо
 
     # Текущее направление LEFT
-    (pygame.K_LEFT, UP): UP,        # Поворот вверх
-    (pygame.K_LEFT, DOWN): DOWN,    # Поворот вниз
+    (pygame.K_LEFT, UP): UP,  # Поворот вверх
+    (pygame.K_LEFT, DOWN): DOWN,  # Поворот вниз
 
     # Текущее направление RIGHT
-    (pygame.K_RIGHT, UP): UP,       # Поворот вверх
-    (pygame.K_RIGHT, DOWN): DOWN,   # Поворот вниз
+    (pygame.K_RIGHT, UP): UP,  # Поворот вверх
+    (pygame.K_RIGHT, DOWN): DOWN,  # Поворот вниз
 }
 
 
@@ -123,10 +124,13 @@ class Snake(GameObject):
         self.body_color = SNAKE_COLOR
         self.length = 1
         self.positions = [initial_position]
-        self.direction = RIGHT
+        self.direction = RIGHT  # Начальное направление вправо
         self.growing = False
         self.last = None
+        self.direction = choice([UP, DOWN, LEFT, RIGHT])  # Случайное
 
+    #  Если я перенесу метод get_head_position в handle_keys()
+    #  То pytest выдаст ошибку
     def get_head_position(self):
         """Предназначена для получения текущей позиции головы змейки."""
         return self.positions[0]
@@ -161,6 +165,7 @@ class Snake(GameObject):
         """Позволяет змейке увеличиваться в длину."""
         self.growing = True
 
+    # Если удалить агрумент screen то будет ошибка
     def draw(self, screen):
         """Отвечает за визуализацию змейки на экране."""
         head_x, head_y = self.get_head_position()
@@ -171,7 +176,7 @@ class Snake(GameObject):
             self.draw_cell(screen, self.last, BOARD_BACKGROUND_COLOR)
 
 
-def handle_keys(game_object):
+def handle_keys(snake):
     """Позволяя управлять змейкой."""
     # Здесь при переносе TURN_KEYS в начало кода получаю ошибку
     TURN_KEYS = set(event_key for event_key, _ in TURNS)
@@ -181,8 +186,7 @@ def handle_keys(game_object):
             pygame.quit()
             raise SystemExit
         elif event.type == pygame.KEYDOWN and event.key in TURN_KEYS:
-            game_object.direction = TURNS.get
-            ((event.key, game_object.direction), game_object.direction)
+            snake.update_direction(event)
 
 
 def main():
