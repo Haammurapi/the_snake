@@ -113,8 +113,9 @@ class Apple(GameObject):
 class Snake(GameObject):
     """Класс описывающий объект змейка."""
 
-    def __init__(self):
+    def __init__(self, screen=None):
         super().__init__()
+        self.screen = screen
         self.reset()
 
     def reset(self):
@@ -127,7 +128,8 @@ class Snake(GameObject):
         self.direction = RIGHT  # Начальное направление вправо
         self.growing = False
         self.last = None
-        self.direction = choice([UP, DOWN, LEFT, RIGHT])  # Случайное
+        random_direction = choice([UP, DOWN, LEFT, RIGHT])
+        self.direction = random_direction
 
     #  Если я перенесу метод get_head_position в handle_keys()
     #  То pytest выдаст ошибку
@@ -135,12 +137,9 @@ class Snake(GameObject):
         """Предназначена для получения текущей позиции головы змейки."""
         return self.positions[0]
 
-    # По условиям задачи этот метод должен быть опредлен в классе Змея
-    # Иначе код не пройдет pytest (уже писал вам в пачку об этом)
-    def update_direction(self, event):
+    def update_direction(self, new_direction):
         """Обновляет направление движения змейки на основе нажатой клавиши."""
-        if (event.key, self.direction) in TURNS:
-            self.next_direction = TURNS[(event.key, self.direction)]
+        self.next_direction = new_direction
 
     def move(self):
         """Отвечает за движение змейки."""
@@ -165,15 +164,13 @@ class Snake(GameObject):
         """Позволяет змейке увеличиваться в длину."""
         self.growing = True
 
-    # Если удалить агрумент screen то будет ошибка
-    def draw(self, screen):
+    def draw(self):
         """Отвечает за визуализацию змейки на экране."""
         head_x, head_y = self.get_head_position()
-        self.draw_cell(screen, (head_x, head_y), self.body_color)
+        self.draw_cell(self.screen, (head_x, head_y), self.body_color)
 
         if self.last:
-            # Используем метод draw_cell для отрисовки последней позиции
-            self.draw_cell(screen, self.last, BOARD_BACKGROUND_COLOR)
+            self.draw_cell(self.screen, self.last, BOARD_BACKGROUND_COLOR)
 
 
 def handle_keys(snake):
@@ -187,6 +184,13 @@ def handle_keys(snake):
             raise SystemExit
         elif event.type == pygame.KEYDOWN and event.key in TURN_KEYS:
             snake.update_direction(event)
+            new_direction = (
+                TURNS[(event.key, snake.direction)]
+                if (event.key, snake.direction) in TURNS
+                else None
+            )
+            if new_direction:
+                snake.update_direction(new_direction)
 
 
 def main():
@@ -194,7 +198,7 @@ def main():
     # Инициализация PyGame:
     pygame.init()
     # Тут нужно создать экземпляры классов.
-    snake = Snake()
+    snake = Snake(screen)
     occupied_positions = set(snake.positions)
     apple = Apple(occupied_positions)  # Передаем занятые позиции
 
@@ -214,7 +218,7 @@ def main():
 
         # Отрисовываем объекты:
         apple.draw(screen)
-        snake.draw(screen)
+        snake.draw()
 
         # Обновляем экран:
         pygame.display.update()
